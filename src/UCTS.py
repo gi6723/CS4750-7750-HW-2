@@ -1,7 +1,7 @@
 import heapq
 from itertools import count
 from typing import Any, Dict
-##from problem import State, is_goal, successors##Subject to change based on "problem" implementaion
+from problem import State, goal_test, successor
 from utils import *
 
 
@@ -30,7 +30,45 @@ def ucts(start_state: State) -> Dict[str, Any]:
         g_cost, tie_id, state, parent_node, action_from_parent = heapq.heappop(frontier)
         expanded += 1
 
+        #record the first 5 nodes
         if len(first5) < 5:
             first5.append((state, g_cost))
+        #if goal is reached reconstruct and return
+        if goal_test(state):
+            #rebuild action list and cost
+            actions, states, final_cost = reconstruct((g_cost, tie_id, state, parent_node, action_from_parent))
+            #return results
+            return pack_result(actions, final_cost, expanded, generated, start_time, first5, cutoff=False)
 
-        if is_goal(state):
+        #else generate children from this state
+        for act, next_state, step_cost in successor(state):
+            #track nodes generated
+            generated += 1
+            #calculate total path cost
+            child_g = g_cost + step_cost
+            #build child node
+            child_node = (child_g, next(tie), next_state, (g_cost, tie_id, state, parent_node, action_from_parent), act)
+            #push onto the heap
+            heapq.heappush(frontier, child_node)
+    return pack_result(None, None, expanded, generated, start_time, first5, cutoff=False)
+
+
+#helper to package results in a dict
+def pack_result(solution, cost, expanded, generated, start_time, first5, cutoff):
+    #return all fields
+    return{
+        #list of actions
+        "solution": solution,
+        #total path cost
+        "cost": cost,
+        #nodes expanded
+        "expanded": expanded,
+        #successors generated
+        "generated": generated,
+        #elapsed time
+        "time": now() - start_time,
+        #first five
+        "first5": first5,
+        #True if stopped due to limits
+        "cutoff": cutoff,
+    }
