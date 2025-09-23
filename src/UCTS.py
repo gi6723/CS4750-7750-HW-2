@@ -17,7 +17,8 @@ def ucts(start_state: State) -> Dict[str, Any]:
     tie = count()
 
     #building the staring node
-    start_node = (0.0, next(tie), start_state, None, None)
+    r0, c0, _ = start_state
+    start_node = (0.0, r0, c0, next(tie), start_state, None, None)
 
     #define the frontier: min heap
     frontier = [start_node]
@@ -27,7 +28,7 @@ def ucts(start_state: State) -> Dict[str, Any]:
         #stop if we hit cutoffs
         if not within_limits(start_time, expanded):
             return pack_result(None, None, expanded, generated, start_time, first5, cutoff = True)
-        g_cost, tie_id, state, parent_node, action_from_parent = heapq.heappop(frontier)
+        g_cost, r, c, tie_id, state, parent_node, action_from_parent = heapq.heappop(frontier)
         expanded += 1
 
         #record the first 5 nodes
@@ -47,7 +48,9 @@ def ucts(start_state: State) -> Dict[str, Any]:
             #calculate total path cost
             child_g = g_cost + step_cost
             #build child node
-            child_node = (child_g, next(tie), next_state, (g_cost, tie_id, state, parent_node, action_from_parent), act)
+            r2, c2, _ = next_state
+            parent_5tuple = (g_cost, tie_id, state, parent_node, action_from_parent)
+            child_node = (child_g, r2, c2, next(tie), next_state, parent_5tuple, act)
             #push onto the heap
             heapq.heappush(frontier, child_node)
     return pack_result(None, None, expanded, generated, start_time, first5, cutoff=False)

@@ -54,13 +54,16 @@ def successor(s: State) -> Iterable[Tuple[str, State, float]]:
     if within_bounds(r + 1, c):
         yield ("Down", (r + 1, c, dirt), ACTIONS["Down"])
 
-    #Suck action if dirt is present
-    if (r,c) in dirt:
-        new_dirt = set(dirt)
-        new_dirt.remove((r,c))
+    # Suck action: ALWAYS allowed.
+    # If current cell is dirty, remove it; otherwise the state is unchanged.
+    if (r, c) in dirt:
+        nd = set(dirt)
+        nd.remove((r, c))
+        next_state = (r, c, frozenset(nd))
+    else:
+        next_state = (r, c, dirt)  # same state if cell is clean
 
-        #We use frozenset to make a new updated dirt set for the child state
-        yield ("Suck", (r, c, frozenset(new_dirt)), ACTIONS["Suck"])
+    yield ("Suck", next_state, ACTIONS["Suck"])
 
 
 def make_state(start_rc, dirt_coords) -> State:
